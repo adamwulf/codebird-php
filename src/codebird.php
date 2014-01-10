@@ -132,6 +132,46 @@ class Codebird
         }
         return self::$_instance;
     }
+    
+    public function authenticate(){
+	    if (! isset($_SESSION['twitter_oauth_token'])) {
+		    // get the request token
+		    $reply = $this->oauth_requestToken(array(
+		        'oauth_callback' => 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
+		    ));
+		
+		    // store the token
+		    $this->setToken($reply->oauth_token, $reply->oauth_token_secret);
+		    $_SESSION['twitter_oauth_token'] = $reply->oauth_token;
+		    $_SESSION['twitter_oauth_token_secret'] = $reply->oauth_token_secret;
+		    $_SESSION['twitter_oauth_verify'] = true;
+		
+		    // redirect to auth website
+		    $auth_url = $this->oauth_authorize();
+		    header('Location: ' . $auth_url);
+		    die();
+		
+		} elseif (isset($_GET['oauth_verifier']) && isset($_SESSION['twitter_oauth_verify'])) {
+		    // verify the token
+		    $this->setToken($_SESSION['twitter_oauth_token'], $_SESSION['twitter_oauth_token_secret']);
+		    unset($_SESSION['twitter_oauth_verify']);
+		
+		    // get the access token
+		    $reply = $this->oauth_accessToken(array(
+		        'oauth_verifier' => $_GET['oauth_verifier']
+		    ));
+		
+		    // store the token (which is different from the request token!)
+		    $_SESSION['twitter_oauth_token'] = $reply->oauth_token;
+		    $_SESSION['twitter_oauth_token_secret'] = $reply->oauth_token_secret;
+		
+		    // send to same URL, without oauth GET parameters
+		    header('Location: ' . 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+		    die();
+		}
+		// assign access token on each page load
+		$this->setToken($_SESSION['twitter_oauth_token'], $_SESSION['twitter_oauth_token_secret']);
+    }
 
     /**
      * Sets the OAuth consumer key and secret (App key)
