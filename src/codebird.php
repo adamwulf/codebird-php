@@ -1049,8 +1049,16 @@ class Codebird
                     // don't perform a full decoding
                     preg_match('/<request>(.*)<\/request>/', $reply, $request);
                     preg_match('/<error>(.*)<\/error>/', $reply, $error);
-                    $parsed['request'] = htmlspecialchars_decode($request[1]);
-                    $parsed['error'] = htmlspecialchars_decode($error[1]);
+                    if(isset($request[1])){
+	                    $parsed['request'] = htmlspecialchars_decode($request[1]);
+	                    $parsed['error'] = htmlspecialchars_decode($error[1]);
+                    }else{
+	                    $parsed['request'] = $method;
+	                    $parsed['error'] = htmlspecialchars($reply);
+	                    
+	                    echo htmlspecialchars($reply);
+	                    exit;
+                    }
                 } else {
                     // assume query format
                     $reply = explode('&', $reply);
